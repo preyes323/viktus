@@ -1,0 +1,4 @@
+*.ovpn
+.DS_Store
+custom-images/*
+
