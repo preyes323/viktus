@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Set the username and password
-username="viktus"
-password="password"
-
 # Ask the user if they want to perform a dist-upgrade
 read -p "Do you want to perform a dist-upgrade? (y/n) " -n 1 -r
 echo
@@ -37,8 +33,15 @@ ufw allow ssh
 echo "Enabling UFW..."
 ufw --force enable
 
+# Set the username
+username="viktus"
+
+# Ask the user for the password
+echo "Please enter the password for the new user:"
+read -s password
+
 # Add the new user
-echo "Adding new user \"$username\" with default password: \"$password\""
+echo "Adding new user \"$username\" with password provided"
 adduser --quiet --disabled-password --shell /bin/bash --home /home/$username --gecos "User" $username
 
 # Set the password
@@ -52,6 +55,22 @@ usermod -aG sudo $username
 echo "Setting up password change at next login..."
 passwd --expire $username
 
+# Disable password authentication via SSH
+echo "Disabling password authentication via SSH..."
+echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+
+# Copy SSH keys for the new user
+echo "Setting up SSH keys for the new user..."
+mkdir /home/$username/.ssh
+cp /root/.ssh/authorized_keys /home/$username/.ssh/
+chown -R $username:$username /home/$username/.ssh
+chmod 700 /home/$username/.ssh
+chmod 600 /home/$username/.ssh/authorized_keys
+
+# Restart SSH service
+systemctl restart ssh
+
 # Print the instructions
 echo "User has been created and added to the sudo group. On first login, they will be required to change their password."
+echo "Password login via SSH has been disabled."
 
